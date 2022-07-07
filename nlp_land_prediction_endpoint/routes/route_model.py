@@ -32,14 +32,6 @@ class ModelSpecificFunctionCallResponse(BaseModel):
     functionCalls: List[str]
 
 
-# XXX-TN Do we need this?
-# XXX-AT We can just output every error with status-codes, but they are not precise
-# class ErrorModel(BaseModel):
-#    """Response Model for an error"""
-#
-#    error: str
-
-
 class ModelCreationResponse(BaseModel):
     """Response Model for the successfull creation of a model"""
 
@@ -52,37 +44,25 @@ class ModelDeletionResponse(BaseModel):
     modelID: str
 
 
-# TODO-AT TN: I just copied the ModelCreationRequest,
-#         since this class was used but i could not find it
-#         please change
 class ModelDeletionRequest(BaseModel):
     """Response model for deleting a model
-    This contains the modelType (e.g., lda) and the model specification
-    which should be parsable to the modelTypes pydentic schema.
+    This contains the modelID.
     """
 
     modelID: str
 
 
-# TODO-AT TN: I just copied the ModelCreationRequest,
-#         since this class was used but i could not find it
-#         please change
 class ModelFunctionRequest(BaseModel):
     """Response model for running a function of a model
-    This contains the modelType (e.g., lda) and the model specification
-    which should be parsable to the modelTypes pydentic schema.
+    This contains the modelID.
     """
 
     modelID: str
 
 
-# TODO-AT TN: I just copied the ModelCreationRequest,
-#         since this class was used but i could not find it
-#         please change
 class ModelUpdateRequest(BaseModel):
     """Response model for updating a model
-    This contains the modelType (e.g., lda) and the model specification
-    which should be parsable to the modelTypes pydentic schema.
+    This contains the modelID and a dict containing the parameters to be updated
     """
 
     modelID: str
@@ -95,8 +75,6 @@ class ModelCreationRequest(BaseModel):
     which should be parsable to the modelTypes pydentic schema.
     """
 
-    # XXX-TN I puropsefully chose modelSpecification to be a dict since
-    #          using the generic model, would incur the loss of pydantics strengths
     modelType: str
     # XXX-TN For the docker ochestration it will be helpfull to also have an input for
     #        the location of Model initialization (local, local[dockerfile], remote)
@@ -147,36 +125,9 @@ def deleteModel(current_modelID: str) -> ModelDeletionResponse:
         # error not found
         raise HTTPException(status_code=404, detail="Model not implemented")
 
-    # delete it
+    # delete model by id
     storage.delModel(currentModel.getId())
     return ModelDeletionResponse(modelID=current_modelID)
-
-
-# TODO-AT I could not get this to work/don't understand what needs to be done
-#         and i think we should not be calling other endpoint functions
-# XXX-AT Some do it like that, but with "FastAPI" and some use just "get" for it.
-#        Other question would be, if we actually need this, if we have delete and put.
-#        Is there a reason, why we use "API-Router" and not "FastAPI"?
-# @router.patch(
-#     "/{current_modelID}",
-#     response_description="Update the current model",
-#     response_model=ModelCreationResponse,
-#     status_code=status.HTTP_201_CREATED,
-# )
-# def updateModel(
-#     modelCreationRequest: ModelCreationRequest, response: Response, current_modelID: str
-# ) -> BaseModel:
-#     """Endpoint for updating a model"""
-#     # validate id
-#     currentModel = storage.getModel(current_modelID)
-#     if currentModel is None:
-#         # error not found
-#         raise HTTPException(status_code=404, detail="Model not implemented")
-#
-#     # create new, delete old
-#     newID = create_model(modelCreationRequest, response)
-#     storage.delModel(currentModel.getId())
-#     return ModelCreationResponse(modelID=newID)
 
 
 @router.patch(
@@ -189,14 +140,17 @@ def patchModel(
     current_modelID: str, modelUpdateRequest: ModelUpdateRequest, response: Response
 ) -> ModelCreationResponse:
     """Endpoint for updating a model"""
+    # Find model
     currentModel = storage.getModel(current_modelID)
     if currentModel is None:
         # error not found
         raise HTTPException(status_code=404, detail="Model not implemented")
+
+    # Run update function of model and return the id, if parameters were updated (return >=0)
     ret = currentModel.update(modelUpdateRequest.dict())
     if ret > -1:
         return ModelCreationResponse(modelID=current_modelID)
-    raise HTTPException(status_code=404, detail="Model not implemented")
+    raise HTTPException(status_code=404, detail="Model or parameter not implemented")
 
 
 @router.get(

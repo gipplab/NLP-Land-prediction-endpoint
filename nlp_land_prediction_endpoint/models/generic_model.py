@@ -74,7 +74,7 @@ class GenericModel(BaseModel):
 
     def update(self: T, inputObject: dict) -> int:
         """Updates the Model"""
-        # Search for parameter, that needs to be updated and update it.
+        # Search for parameter, that needs to be updated and update it. (return >=0)
         # If not found, return -1
         raise NotImplementedError("GenericModel.update has to be implemented by the subclass")
 
