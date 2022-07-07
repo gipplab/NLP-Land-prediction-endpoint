@@ -28,6 +28,12 @@ For development install [poetry](https://python-poetry.org/):
 pip install poetry
 ```
 
+Mac version:
+
+```console
+brew install poetry
+```
+
 Then run:
 
 ```console
