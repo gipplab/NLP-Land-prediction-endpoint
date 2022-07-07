@@ -129,6 +129,18 @@ class LDAModel(myGeneric_Model):
         #        Later on this will be an array of paper. ids Maybe create an Issue?
         return list(self.processingModel.get_document_topics(**inputObject))
 
+    def update(self: T, inputObject: dict) -> int:
+        """Update the LDA model"""
+        blacklist = ["id", "createdBy", "createdAt"]
+        inputDict = inputObject["modelSpecification"]
+        for i in inputDict.keys():
+            if hasattr(self, i):
+                if i not in blacklist:
+                    setattr(self, i, inputDict[i])
+            else:
+                return -1
+        return 0
+
 
 class LDAInputModel(GenericInputModel):
     """Input for a generic model"""

@@ -1,5 +1,4 @@
-"""This modulew implements the generic-model"""
-import random
+"""This module implements the generic-model"""
 from datetime import datetime
 from typing import Any, Dict, Optional, TypeVar
 
@@ -26,7 +25,7 @@ class GenericModel(BaseModel):
     def __init__(self: T, **data: Any) -> None:
         """Constructor for GenericModel"""
         data["createdAt"] = datetime.timestamp(datetime.now())
-        data["id"] = "Model-" + data["name"] + "-" + str(data["createdAt"] * random.random())
+        data["id"] = str(hash(data["createdAt"]))
         super().__init__(**data)
 
     def __hash__(self: T) -> int:
@@ -72,6 +71,12 @@ class GenericModel(BaseModel):
     def predict(self: T, inputObject: dict) -> list:
         """Predict something with data from inputObject"""
         raise NotImplementedError("GenericModel.predict has to be implemented by the subclass")
+
+    def update(self: T, inputObject: dict) -> int:
+        """Updates the Model"""
+        # Search for parameter, that needs to be updated and update it.
+        # If not found, return -1
+        raise NotImplementedError("GenericModel.update has to be implemented by the subclass")
 
 
 class GenericInputModel(BaseModel):

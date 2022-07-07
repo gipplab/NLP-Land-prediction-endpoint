@@ -56,7 +56,7 @@ class ModelDeletionResponse(BaseModel):
 #         since this class was used but i could not find it
 #         please change
 class ModelDeletionRequest(BaseModel):
-    """Response model for creating a Model
+    """Response model for deleting a model
     This contains the modelType (e.g., lda) and the model specification
     which should be parsable to the modelTypes pydentic schema.
     """
@@ -68,7 +68,7 @@ class ModelDeletionRequest(BaseModel):
 #         since this class was used but i could not find it
 #         please change
 class ModelFunctionRequest(BaseModel):
-    """Response model for creating a Model
+    """Response model for running a function of a model
     This contains the modelType (e.g., lda) and the model specification
     which should be parsable to the modelTypes pydentic schema.
     """
@@ -80,7 +80,7 @@ class ModelFunctionRequest(BaseModel):
 #         since this class was used but i could not find it
 #         please change
 class ModelUpdateRequest(BaseModel):
-    """Response model for creating a Model
+    """Response model for updating a model
     This contains the modelType (e.g., lda) and the model specification
     which should be parsable to the modelTypes pydentic schema.
     """
@@ -179,6 +179,26 @@ def deleteModel(current_modelID: str) -> ModelDeletionResponse:
 #     return ModelCreationResponse(modelID=newID)
 
 
+@router.patch(
+    "/{current_modelID}",
+    response_description="Patch/Update current model",
+    response_model=ModelCreationResponse,
+    status_code=status.HTTP_200_OK,
+)
+def patchModel(
+    current_modelID: str, modelUpdateRequest: ModelUpdateRequest, response: Response
+) -> ModelCreationResponse:
+    """Endpoint for updating a model"""
+    currentModel = storage.getModel(current_modelID)
+    if currentModel is None:
+        # error not found
+        raise HTTPException(status_code=404, detail="Model not implemented")
+    ret = currentModel.update(modelUpdateRequest.dict())
+    if ret > -1:
+        return ModelCreationResponse(modelID=current_modelID)
+    raise HTTPException(status_code=404, detail="Model not implemented")
+
+
 @router.get(
     "/",
     response_description="Lists all currently created models",
@@ -236,7 +256,7 @@ def run_function(current_modelID: str, req_function: str, data_input: Dict[Any, 
     # Validate id
     currentModel = storage.getModel(current_modelID)
     if currentModel is None:
-        # error not found
+        # Error not found
         raise HTTPException(status_code=404, detail="Model not found")
 
     # Check if the function is actually availabe in the requested model
@@ -250,7 +270,7 @@ def run_function(current_modelID: str, req_function: str, data_input: Dict[Any, 
     output = myFun(**data_input)
     # XXX-TN we have to ensure that we return a dict on a function call
     #        i dont know if the following is the best way to achive this
-    if not type(output) is dict:
+    if type(output) is not dict:
         # raise HTTPException(status_code=500, detail="Model did not return a valid response")
         output = {req_function: str(output)}  # TODO-TN this is relly hacky
     outModelResp = GenericOutputModel(outputData=output)

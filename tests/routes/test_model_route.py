@@ -79,9 +79,18 @@ def modelUpdateRequest() -> ModelUpdateRequest:
     Returns:
         ModelUpdateRequest: An correct modeldeletion request
     """
-    return ModelUpdateRequest(
-        modelID="1234", modelType="lda", modelSpecification={"createdBy": "Test"}
-    )
+    return ModelUpdateRequest(modelID="1234", modelSpecification={"name": "Test"})
+
+
+# TODO-AT change accordingly to changes in route_model.py
+@pytest.fixture
+def modelUpdateRequest2() -> ModelUpdateRequest:
+    """Get a correct model deletion request
+
+    Returns:
+        ModelUpdateRequest: An correct modeldeletion request
+    """
+    return ModelUpdateRequest(modelID="1234", modelSpecification={"namen": "Test"})
 
 
 @pytest.fixture
@@ -220,6 +229,31 @@ def test_model_function(
         endpoint + str(mfr.modelID), json={"functionCall": "ThisWillNeverExists", "inputData": {}}
     )  # TODO make a proper pyfixture
     assert failing_response.status_code == 404
+
+
+def test_model_update(
+    client: Generator,
+    endpoint: str,
+    modelUpdateRequest: ModelUpdateRequest,
+    modelUpdateRequest2: ModelUpdateRequest,
+) -> None:
+    """Test for successfull model updates
+
+    Arguments:
+        client (TestClient): The current test client
+        endpoint (str): Endpoint to query
+        modelUpdateRequest (ModelDeletionRequest): A correct ModelUpdateRequest
+        modelUpdateRequest2 (ModelDeletionRequest): An incorrect ModelUpdateRequest
+    """
+    models = client.get(endpoint).json()
+    assert "models" in models
+    testModelID = models["models"][0]
+    response = client.patch(endpoint + testModelID, json=modelUpdateRequest.dict())
+    assert response.status_code == 200
+    response2 = client.patch(endpoint + testModelID + "1", json=modelUpdateRequest.dict())
+    assert response2.status_code == 404
+    response3 = client.patch(endpoint + testModelID, json=modelUpdateRequest2.dict())
+    assert response3.status_code == 404
 
 
 def test_model_delete(
