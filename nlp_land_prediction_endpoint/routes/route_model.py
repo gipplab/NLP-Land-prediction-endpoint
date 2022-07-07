@@ -224,9 +224,8 @@ def run_function(current_modelID: str, req_function: str, data_input: Dict[Any, 
     output = myFun(**data_input)
     # XXX-TN we have to ensure that we return a dict on a function call
     #        i dont know if the following is the best way to achive this
-    if type(output) is not dict:
-        # raise HTTPException(status_code=500, detail="Model did not return a valid response")
-        output = {req_function: str(output)}  # TODO-TN this is relly hacky
-    outModelResp = GenericOutputModel(outputData=output)
+    outputDict = {}
+    outputDict[req_function] = output
+    outModelResp = GenericOutputModel(outputData=outputDict)
 
     return outModelResp
